@@ -42,7 +42,7 @@ const menu = [
 ];
 
 const stock = [
-  { name: "Besi Tua", weight: 25500, value: 127500000 },
+  { name: "Besi Tua", weight: 0, value: 0 },
   { name: "Besi Super", weight: 0, value: 0 },
   { name: "Besi Campur", weight: 0, value: 0 },
   { name: "Besi Tipis", weight: 0, value: 0 },
@@ -53,27 +53,27 @@ const stock = [
   { name: "Besi UNP / Kanal", weight: 0, value: 0 },
   { name: "Besi WF / H-Beam", weight: 0, value: 0 },
 
-  { name: "Tembaga Kupas", weight: 1250, value: 150000000 },
+  { name: "Tembaga Kupas", weight: 0, value: 0 },
   { name: "Tembaga Bakar", weight: 0, value: 0 },
   { name: "Tembaga Serabut", weight: 0, value: 0 },
   { name: "Tembaga Campur", weight: 0, value: 0 },
   { name: "Tembaga Pipa", weight: 0, value: 0 },
   { name: "Tembaga Kuning", weight: 0, value: 0 },
 
-  { name: "Aluminium", weight: 3200, value: 80000000 },
+  { name: "Aluminium", weight: 0, value: 0 },
   { name: "Aluminium Tebal", weight: 0, value: 0 },
   { name: "Aluminium Tipis", weight: 0, value: 0 },
   { name: "Aluminium Profil", weight: 0, value: 0 },
   { name: "Aluminium Kaleng", weight: 0, value: 0 },
   { name: "Aluminium Velg", weight: 0, value: 0 },
 
-  { name: "Kuningan", weight: 850, value: 68000000 },
+  { name: "Kuningan", weight: 0, value: 0 },
   { name: "Kuningan Campur", weight: 0, value: 0 },
   { name: "Kuningan Kuning", weight: 0, value: 0 },
   { name: "Kuningan Merah", weight: 0, value: 0 },
   { name: "Kuningan Kran", weight: 0, value: 0 },
 
-  { name: "Stainless", weight: 4500, value: 90000000 },
+  { name: "Stainless", weight: 0, value: 0 },
   { name: "Stainless 304", weight: 0, value: 0 },
   { name: "Stainless 316", weight: 0, value: 0 },
   { name: "Stainless Campur", weight: 0, value: 0 },
@@ -87,6 +87,66 @@ const stock = [
   { name: "Timah", weight: 0, value: 0 },
   { name: "Nikel", weight: 0, value: 0 },
 ];
+
+function rebuildMaterialsFromTransactions(currentMaterials, purchases, sales) {
+  const materialMap = new Map();
+
+  // Pertahankan daftar material, tetapi hitung ulang berat & nilai dari nol.
+  currentMaterials.forEach((item) => {
+    materialMap.set(item.name, {
+      ...item,
+      weight: 0,
+      value: 0,
+    });
+  });
+
+  purchases.forEach((item) => {
+    if (!materialMap.has(item.material)) {
+      materialMap.set(item.material, {
+        name: item.material,
+        weight: 0,
+        value: 0,
+      });
+    }
+
+    const current = materialMap.get(item.material);
+    materialMap.set(item.material, {
+      ...current,
+      weight: Number(current.weight || 0) + Number(item.weight || 0),
+      value: Number(current.value || 0) + Number(item.total || 0),
+    });
+  });
+
+  sales.forEach((item) => {
+    if (!materialMap.has(item.material)) {
+      materialMap.set(item.material, {
+        name: item.material,
+        weight: 0,
+        value: 0,
+      });
+    }
+
+    const current = materialMap.get(item.material);
+    materialMap.set(item.material, {
+      ...current,
+      weight: Math.max(
+        0,
+        Number(current.weight || 0) - Number(item.weight || 0)
+      ),
+      value: Math.max(
+        0,
+        Number(current.value || 0) - Number(item.cost || 0)
+      ),
+    });
+  });
+
+  return Array.from(materialMap.values()).map((item) => ({
+    ...item,
+    weight: Math.abs(Number(item.weight || 0)) < 0.000001 ? 0 : Number(item.weight || 0),
+    value: Math.abs(Number(item.value || 0)) < 0.01 ? 0 : Number(item.value || 0),
+  }));
+}
+
 
 const expenses = [
   { name: "Pembelian", value: 85000000, icon: "↓" },
@@ -196,6 +256,15 @@ function App() {
   const [newMaterial, setNewMaterial] = useState("");
   const [editingMaterial, setEditingMaterial] = useState(null);
   const [editMaterialName, setEditMaterialName] = useState("");
+
+  // STOK OTOMATIS:
+  // Setiap perubahan Pembelian/Penjualan akan menghitung ulang stok.
+  // Dengan cara ini urutan Hapus tidak bisa lagi meninggalkan stok sisa.
+  useEffect(() => {
+    setMaterials((current) =>
+      rebuildMaterialsFromTransactions(current, purchases, sales)
+    );
+  }, [purchases, sales]);
 
   const [syncStatus, setSyncStatus] = useState("Menghubungkan...");
   const syncReadyRef = useRef(false);
@@ -1895,8 +1964,18 @@ function App() {
 
   return (
     <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
+      <aside
+        className="sidebar"
+        style={{
+          height: "100vh",
+          position: "sticky",
+          top: 0,
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
+      >
+        <div className="brand" style={{flexShrink:0}}>
           <div className="brand-logo">W</div>
           <div>
             <div className="brand-title">WIDI KURNIA</div>
@@ -1904,9 +1983,16 @@ function App() {
           </div>
         </div>
 
-        <div className="menu-title">MENU UTAMA</div>
+        <div className="menu-title" style={{flexShrink:0}}>MENU UTAMA</div>
 
-        <nav>
+        <nav
+          style={{
+            flex: 1,
+            minHeight: 0,
+            overflowY: "auto",
+            paddingBottom: "10px",
+          }}
+        >
           {visibleMenu.map((item) => (
             <button
               key={item.id}
@@ -1921,7 +2007,16 @@ function App() {
           ))}
         </nav>
 
-        <div className="sidebar-bottom">
+        <div
+          className="sidebar-bottom"
+          style={{
+            flexShrink: 0,
+            position: "relative",
+            zIndex: 10,
+            paddingBottom: "max(14px, env(safe-area-inset-bottom))",
+            background: "inherit",
+          }}
+        >
           <div className="company-status">
             <span className="status-dot"></span>
             Sistem aktif
@@ -1929,6 +2024,24 @@ function App() {
           <div style={{fontSize:"12px",marginTop:"8px",opacity:.8}}>
             {currentUserName} — {currentRole === "admin" ? "Administrator" : "Karyawan"}
           </div>
+          <button
+            type="button"
+            onClick={logoutRole}
+            style={{
+              marginTop:"10px",
+              width:"100%",
+              padding:"10px 10px",
+              borderRadius:"8px",
+              border:"1px solid rgba(255,255,255,.28)",
+              background:"rgba(255,255,255,.14)",
+              color:"#fff",
+              cursor:"pointer",
+              fontWeight:700,
+            }}
+          >
+            Keluar / Ganti Pengguna
+          </button>
+
           {currentRole === "admin" && (
             <button
               type="button"
@@ -1947,24 +2060,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-
-          <button
-            type="button"
-            onClick={logoutRole}
-            style={{
-              marginTop:"10px",
-              width:"100%",
-              padding:"8px 10px",
-              borderRadius:"8px",
-              border:"1px solid rgba(255,255,255,.15)",
-              background:"transparent",
-              color:"#fff",
-              cursor:"pointer",
-            }}
-          >
-            Keluar / Ganti Pengguna
-          </button>
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.1</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.4</div>
         </div>
       </aside>
 
