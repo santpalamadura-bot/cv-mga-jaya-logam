@@ -1982,7 +1982,8 @@ function App() {
     <div className="app">
       <style>{`
         .mobile-menu-button,
-        .mobile-menu-overlay {
+        .mobile-menu-overlay,
+        .mobile-logout-button {
           display: none;
         }
 
@@ -2025,6 +2026,21 @@ function App() {
 
           .sidebar.mobile-open {
             transform: translateX(0);
+          }
+
+          .mobile-logout-button {
+            display: block !important;
+            width: calc(100% - 28px) !important;
+            margin: 0 14px 14px !important;
+            padding: 11px 12px !important;
+            border-radius: 10px !important;
+            border: 1px solid rgba(255,255,255,.28) !important;
+            background: rgba(255,255,255,.12) !important;
+            color: #fff !important;
+            font-weight: 700 !important;
+            text-align: left !important;
+            box-sizing: border-box !important;
+            flex-shrink: 0 !important;
           }
 
           .sidebar .brand,
@@ -2305,6 +2321,14 @@ function App() {
           </div>
         </div>
 
+        <button
+          type="button"
+          className="mobile-logout-button"
+          onClick={logoutRole}
+        >
+          Keluar / Ganti Pengguna
+        </button>
+
         <div className="menu-title">MENU UTAMA</div>
 
         <nav>
@@ -2369,7 +2393,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.7</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.8</div>
         </div>
       </aside>
 
