@@ -473,14 +473,11 @@ function App() {
     0
   );
 
-  const openingInventoryValue = stock.reduce(
-    (total, item) => total + Number(item.value || 0),
+  // Modal barang terjual dihitung dari biaya yang disimpan pada SETIAP penjualan.
+  // Jadi stok awal/demo tidak pernah dianggap sebagai barang terjual.
+  const costOfGoodsSold = sales.reduce(
+    (total, item) => total + Math.max(0, Number(item.cost || 0)),
     0
-  );
-
-  const costOfGoodsSold = Math.max(
-    0,
-    openingInventoryValue + totalPurchases - currentInventoryValue
   );
 
   const grossProfit = totalSales - costOfGoodsSold;
@@ -540,34 +537,10 @@ function App() {
     .filter((i) => i.type === "keluar")
     .reduce((t, i) => t + Number(i.amount || 0), 0);
 
-  const reportEstimatedCOGS = reportSales.reduce((total, sale) => {
-    const openingItem = stock.find(
-      (item) => item.name === sale.material
-    );
-
-    const matchingPurchases = purchases.filter(
-      (p) => p.material === sale.material
-    );
-
-    const purchasedWeight =
-      Number(openingItem?.weight || 0) +
-      matchingPurchases.reduce(
-        (t, p) => t + Number(p.weight || 0),
-        0
-      );
-
-    const purchasedValue =
-      Number(openingItem?.value || 0) +
-      matchingPurchases.reduce(
-        (t, p) => t + Number(p.total || 0),
-        0
-      );
-
-    const averageCost =
-      purchasedWeight > 0 ? purchasedValue / purchasedWeight : 0;
-
-    return total + averageCost * Number(sale.weight || 0);
-  }, 0);
+  const reportEstimatedCOGS = reportSales.reduce(
+    (total, sale) => total + Math.max(0, Number(sale.cost || 0)),
+    0
+  );
 
   const reportGrossProfit = reportSalesTotal - reportEstimatedCOGS;
   const reportNetProfit =
@@ -813,6 +786,12 @@ function App() {
       return;
     }
 
+    const selectedWeight = Number(selectedMaterial?.weight || 0);
+    const selectedValue = Number(selectedMaterial?.value || 0);
+    const averageCost =
+      selectedWeight > 0 ? selectedValue / selectedWeight : 0;
+    const saleCost = averageCost * numericWeight;
+
     const newSale = {
       id: Date.now(),
       date: new Date().toLocaleDateString("id-ID"),
@@ -822,6 +801,8 @@ function App() {
       weight: numericWeight,
       price: numericPrice,
       total: numericWeight * numericPrice,
+      cost: saleCost,
+      profit: numericWeight * numericPrice - saleCost,
     };
 
     setSales((prev) => [...prev, newSale]);
@@ -942,7 +923,17 @@ function App() {
     setMaterials((prev) =>
       prev.map((m) =>
         m.name === item.material
-          ? { ...m, weight: Math.max(0, Number(m.weight || 0) - Number(item.weight || 0)) }
+          ? {
+              ...m,
+              weight: Math.max(
+                0,
+                Number(m.weight || 0) - Number(item.weight || 0)
+              ),
+              value: Math.max(
+                0,
+                Number(m.value || 0) - Number(item.total || 0)
+              ),
+            }
           : m
       )
     );
@@ -973,14 +964,30 @@ function App() {
 
     const oldMaterial = item.material;
     const oldWeight = Number(item.weight || 0);
+    const oldTotal = Number(item.total || 0);
     const targetMaterial = newMaterial.trim();
+    const newTotal = newWeight * newPrice;
 
     setMaterials((prev) =>
       prev.map((m) => {
         let nextWeight = Number(m.weight || 0);
-        if (m.name === oldMaterial) nextWeight -= oldWeight;
-        if (m.name === targetMaterial) nextWeight += newWeight;
-        return { ...m, weight: Math.max(0, nextWeight) };
+        let nextValue = Number(m.value || 0);
+
+        if (m.name === oldMaterial) {
+          nextWeight -= oldWeight;
+          nextValue -= oldTotal;
+        }
+
+        if (m.name === targetMaterial) {
+          nextWeight += newWeight;
+          nextValue += newTotal;
+        }
+
+        return {
+          ...m,
+          weight: Math.max(0, nextWeight),
+          value: Math.max(0, nextValue),
+        };
       })
     );
 
@@ -1008,7 +1015,11 @@ function App() {
     setMaterials((prev) =>
       prev.map((m) =>
         m.name === item.material
-          ? { ...m, weight: Number(m.weight || 0) + Number(item.weight || 0) }
+          ? {
+              ...m,
+              weight: Number(m.weight || 0) + Number(item.weight || 0),
+              value: Number(m.value || 0) + Number(item.cost || 0),
+            }
           : m
       )
     );
@@ -1038,23 +1049,51 @@ function App() {
       return;
     }
 
-    const availableTarget =
-      Number(materials.find((m) => m.name === targetMaterial)?.weight || 0) +
-      (targetMaterial === item.material ? Number(item.weight || 0) : 0);
+    const oldSaleWeight = Number(item.weight || 0);
+    const oldSaleCost = Number(item.cost || 0);
 
-    if (newWeight > availableTarget) {
+    const targetBefore = materials.find((m) => m.name === targetMaterial);
+    const restoredTargetWeight =
+      Number(targetBefore?.weight || 0) +
+      (targetMaterial === item.material ? oldSaleWeight : 0);
+    const restoredTargetValue =
+      Number(targetBefore?.value || 0) +
+      (targetMaterial === item.material ? oldSaleCost : 0);
+
+    if (newWeight > restoredTargetWeight) {
       alert(
-        `Stok ${targetMaterial} tidak cukup. Maksimal ${availableTarget.toLocaleString("id-ID")} KG.`
+        `Stok ${targetMaterial} tidak cukup. Maksimal ${restoredTargetWeight.toLocaleString("id-ID")} KG.`
       );
       return;
     }
 
+    const targetAverageCost =
+      restoredTargetWeight > 0
+        ? restoredTargetValue / restoredTargetWeight
+        : 0;
+    const newCost = targetAverageCost * newWeight;
+    const newTotal = newWeight * newPrice;
+
     setMaterials((prev) =>
       prev.map((m) => {
         let nextWeight = Number(m.weight || 0);
-        if (m.name === item.material) nextWeight += Number(item.weight || 0);
-        if (m.name === targetMaterial) nextWeight -= newWeight;
-        return { ...m, weight: Math.max(0, nextWeight) };
+        let nextValue = Number(m.value || 0);
+
+        if (m.name === item.material) {
+          nextWeight += oldSaleWeight;
+          nextValue += oldSaleCost;
+        }
+
+        if (m.name === targetMaterial) {
+          nextWeight -= newWeight;
+          nextValue -= newCost;
+        }
+
+        return {
+          ...m,
+          weight: Math.max(0, nextWeight),
+          value: Math.max(0, nextValue),
+        };
       })
     );
 
@@ -1067,7 +1106,9 @@ function App() {
               material: targetMaterial,
               weight: newWeight,
               price: newPrice,
-              total: newWeight * newPrice,
+              total: newTotal,
+              cost: newCost,
+              profit: newTotal - newCost,
             }
           : s
       )
@@ -2274,7 +2315,7 @@ function App() {
                   <div className="card blue">
                     <div className="card-top"><span>Modal Barang Terjual</span><span className="card-icon">Rp</span></div>
                     <h3>{rupiah(costOfGoodsSold)}</h3>
-                    <p>Modal barang terjual dihitung otomatis dari stok awal + pembelian - stok tersisa</p>
+                    <p>Modal dihitung hanya dari barang yang benar-benar terjual</p>
                   </div>
 
                   <div className="card green">
