@@ -179,6 +179,21 @@ function App() {
   const [currentRole, setCurrentRole] = useState(() =>
     loadLocal("wks_role_session", "")
   );
+
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      viewport = document.createElement("meta");
+      viewport.setAttribute("name", "viewport");
+      document.head.appendChild(viewport);
+    }
+    viewport.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+    );
+  }, []);
   const [currentUserName, setCurrentUserName] = useState(() =>
     loadLocal("wks_user_name_session", "")
   );
@@ -707,6 +722,7 @@ function App() {
   }
 
   function logoutRole() {
+    setMobileMenuOpen(false);
     setCurrentRole("");
     setCurrentUserName("");
     setSelectedLoginName("");
@@ -1962,21 +1978,6 @@ function App() {
       ? menu.filter((item) => item.id === "pembelian")
       : menu;
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    let viewport = document.querySelector('meta[name="viewport"]');
-    if (!viewport) {
-      viewport = document.createElement("meta");
-      viewport.setAttribute("name", "viewport");
-      document.head.appendChild(viewport);
-    }
-    viewport.setAttribute(
-      "content",
-      "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
-    );
-  }, []);
-
   return (
     <div className="app">
       <style>{`
@@ -2016,22 +2017,43 @@ function App() {
             z-index: 1200 !important;
             transform: translateX(-105%);
             transition: transform .22s ease;
-            overflow-y: auto !important;
-            overflow-x: hidden !important;
+            overflow: hidden !important;
             box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
           }
 
           .sidebar.mobile-open {
             transform: translateX(0);
           }
 
+          .sidebar .brand,
+          .sidebar .menu-title {
+            flex-shrink: 0 !important;
+          }
+
           .sidebar nav {
-            overflow: visible !important;
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            padding-bottom: 10px !important;
+            -webkit-overflow-scrolling: touch !important;
           }
 
           .sidebar-bottom {
-            margin-top: 18px !important;
-            padding-bottom: 24px !important;
+            flex: 0 0 auto !important;
+            margin-top: 0 !important;
+            padding-top: 12px !important;
+            padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+            background: inherit !important;
+            position: relative !important;
+            z-index: 2 !important;
+          }
+
+          .sidebar-bottom button {
+            width: 100% !important;
+            box-sizing: border-box !important;
           }
 
           .mobile-menu-button {
@@ -2347,7 +2369,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.6</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.7</div>
         </div>
       </aside>
 
