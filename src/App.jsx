@@ -1964,18 +1964,8 @@ function App() {
 
   return (
     <div className="app">
-      <aside
-        className="sidebar"
-        style={{
-          height: "100vh",
-          position: "sticky",
-          top: 0,
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-        }}
-      >
-        <div className="brand" style={{flexShrink:0}}>
+      <aside className="sidebar">
+        <div className="brand">
           <div className="brand-logo">W</div>
           <div>
             <div className="brand-title">WIDI KURNIA</div>
@@ -1983,16 +1973,9 @@ function App() {
           </div>
         </div>
 
-        <div className="menu-title" style={{flexShrink:0}}>MENU UTAMA</div>
+        <div className="menu-title">MENU UTAMA</div>
 
-        <nav
-          style={{
-            flex: 1,
-            minHeight: 0,
-            overflowY: "auto",
-            paddingBottom: "10px",
-          }}
-        >
+        <nav>
           {visibleMenu.map((item) => (
             <button
               key={item.id}
@@ -2007,16 +1990,7 @@ function App() {
           ))}
         </nav>
 
-        <div
-          className="sidebar-bottom"
-          style={{
-            flexShrink: 0,
-            position: "relative",
-            zIndex: 10,
-            paddingBottom: "max(14px, env(safe-area-inset-bottom))",
-            background: "inherit",
-          }}
-        >
+        <div className="sidebar-bottom">
           <div className="company-status">
             <span className="status-dot"></span>
             Sistem aktif
@@ -2030,7 +2004,7 @@ function App() {
             style={{
               marginTop:"10px",
               width:"100%",
-              padding:"10px 10px",
+              padding:"8px 10px",
               borderRadius:"8px",
               border:"1px solid rgba(255,255,255,.28)",
               background:"rgba(255,255,255,.14)",
@@ -2060,7 +2034,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.4</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.5</div>
         </div>
       </aside>
 
