@@ -193,6 +193,7 @@ function App() {
       "content",
       "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
     );
+    document.title = "WKS Management System";
   }, []);
   const [currentUserName, setCurrentUserName] = useState(() =>
     loadLocal("wks_user_name_session", "")
@@ -2393,7 +2394,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.8</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v3.0 FINAL</div>
         </div>
       </aside>
 
