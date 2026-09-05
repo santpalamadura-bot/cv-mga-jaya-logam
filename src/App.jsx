@@ -600,6 +600,14 @@ function App() {
   const reportCashIn = reportSalesTotal + reportCashInOther;
   const reportBalance = reportCashIn - reportCashOut;
 
+  function requireAdmin(actionLabel = "melakukan tindakan ini") {
+    if (currentRole !== "admin") {
+      alert(`Akses ditolak. Hanya Administrator yang dapat ${actionLabel}.`);
+      return false;
+    }
+    return true;
+  }
+
   function loginAdmin() {
     if (!selectedLoginName || !admins.includes(selectedLoginName)) {
       alert("Pilih nama Admin terlebih dahulu.");
@@ -637,6 +645,7 @@ function App() {
   }
 
   function changeAdminPin() {
+    if (!requireAdmin("mengubah PIN Admin")) return;
     const pin = newAdminPin.trim();
     if (!/^\d{4,8}$/.test(pin)) {
       alert("PIN harus 4 sampai 8 angka.");
@@ -648,6 +657,7 @@ function App() {
   }
 
   function addMaterial() {
+    if (!requireAdmin("menambah Master Data")) return;
     const name = newMaterial.trim();
 
     if (!name) {
@@ -677,11 +687,13 @@ function App() {
   }
 
   function startEditMaterial(item) {
+    if (!requireAdmin("mengedit Master Data")) return;
     setEditingMaterial(item.name);
     setEditMaterialName(item.name);
   }
 
   function saveEditMaterial() {
+    if (!requireAdmin("mengedit Master Data")) return;
     const name = editMaterialName.trim();
 
     if (!name) {
@@ -807,6 +819,7 @@ function App() {
   }
 
   function saveSale() {
+    if (!requireAdmin("mencatat penjualan")) return;
     if (!buyer || !saleMaterial || !saleWeight || !salePrice) {
       alert("Mohon lengkapi semua data penjualan.");
       return;
@@ -888,6 +901,7 @@ function App() {
   }
 
   function saveAdvance() {
+    if (!requireAdmin("mencatat panjar")) return;
     const amount = Number(advanceAmount);
     if (!advanceName.trim() || amount <= 0) {
       alert("Isi nama dan nominal panjar dengan benar.");
@@ -907,6 +921,7 @@ function App() {
   }
 
   function settleAdvance(id) {
+    if (!requireAdmin("mengubah status panjar")) return;
     if (!window.confirm("Tandai panjar ini sebagai lunas?")) return;
     setAdvances((prev) => prev.map((item) =>
       item.id === id ? { ...item, remaining: 0, status: "Lunas" } : item
@@ -914,6 +929,7 @@ function App() {
   }
 
   function saveDebt() {
+    if (!requireAdmin("mencatat kasbon")) return;
     const amount = Number(debtAmount);
     if (!debtName.trim() || amount <= 0) {
       alert("Isi nama dan nominal kasbon dengan benar.");
@@ -933,6 +949,7 @@ function App() {
   }
 
   function settleDebt(id) {
+    if (!requireAdmin("mengubah status kasbon")) return;
     if (!window.confirm("Tandai kasbon ini sebagai lunas?")) return;
     setDebts((prev) => prev.map((item) =>
       item.id === id ? { ...item, remaining: 0, status: "Lunas" } : item
@@ -940,6 +957,7 @@ function App() {
   }
 
   function saveOperation() {
+    if (!requireAdmin("mencatat operasional")) return;
     const amount = Number(operationAmount);
     if (!operationCategory.trim() || amount <= 0) {
       alert("Isi kategori dan nominal operasional dengan benar.");
@@ -957,11 +975,13 @@ function App() {
   }
 
   function deleteOperation(id) {
+    if (!requireAdmin("menghapus operasional")) return;
     if (!window.confirm("Hapus catatan operasional ini?")) return;
     setOperations((prev) => prev.filter((item) => item.id !== id));
   }
 
   function deletePurchase(id) {
+    if (!requireAdmin("menghapus pembelian")) return;
     const item = purchases.find((p) => p.id === id);
     if (!item || !window.confirm("Hapus transaksi pembelian ini?")) return;
 
@@ -986,6 +1006,7 @@ function App() {
   }
 
   function editPurchase(id) {
+    if (!requireAdmin("mengedit pembelian")) return;
     const item = purchases.find((p) => p.id === id);
     if (!item) return;
 
@@ -1054,6 +1075,7 @@ function App() {
   }
 
   function deleteSale(id) {
+    if (!requireAdmin("menghapus penjualan")) return;
     const item = sales.find((s) => s.id === id);
     if (!item || !window.confirm("Hapus transaksi penjualan ini?")) return;
 
@@ -1072,6 +1094,7 @@ function App() {
   }
 
   function editSale(id) {
+    if (!requireAdmin("mengedit penjualan")) return;
     const item = sales.find((s) => s.id === id);
     if (!item) return;
 
@@ -1162,6 +1185,7 @@ function App() {
   }
 
   function editAdvance(id) {
+    if (!requireAdmin("mengedit panjar")) return;
     const item = advances.find((x) => x.id === id);
     if (!item) return;
     const name = window.prompt("Nama:", item.name);
@@ -1189,11 +1213,13 @@ function App() {
   }
 
   function deleteAdvance(id) {
+    if (!requireAdmin("menghapus panjar")) return;
     if (!window.confirm("Hapus catatan panjar ini?")) return;
     setAdvances((prev) => prev.filter((x) => x.id !== id));
   }
 
   function editDebt(id) {
+    if (!requireAdmin("mengedit kasbon")) return;
     const item = debts.find((x) => x.id === id);
     if (!item) return;
     const name = window.prompt("Nama:", item.name);
@@ -1221,11 +1247,13 @@ function App() {
   }
 
   function deleteDebt(id) {
+    if (!requireAdmin("menghapus kasbon")) return;
     if (!window.confirm("Hapus catatan kasbon ini?")) return;
     setDebts((prev) => prev.filter((x) => x.id !== id));
   }
 
   function editOperation(id) {
+    if (!requireAdmin("mengedit operasional")) return;
     const item = operations.find((x) => x.id === id);
     if (!item) return;
     const category = window.prompt("Kategori:", item.category);
@@ -1252,6 +1280,7 @@ function App() {
   }
 
   function exportReportExcel() {
+    if (!requireAdmin("mengekspor laporan")) return;
     const rows = [];
 
     rows.push([
@@ -1389,6 +1418,7 @@ function App() {
   }
 
   function downloadLatestAutoBackup() {
+    if (!requireAdmin("mengunduh backup otomatis")) return;
     try {
       const backups = JSON.parse(
         localStorage.getItem("wks_auto_backups") || "[]"
@@ -1420,6 +1450,7 @@ function App() {
   }
 
   function backupData() {
+    if (!requireAdmin("membuat backup manual")) return;
     const data = {
       version: 1,
       createdAt: new Date().toISOString(),
@@ -1449,6 +1480,10 @@ function App() {
   }
 
   function restoreData(event) {
+    if (!requireAdmin("melakukan restore data")) {
+      event.target.value = "";
+      return;
+    }
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -1495,6 +1530,7 @@ function App() {
   }
 
   function saveCashMovement() {
+    if (!requireAdmin("mencatat transaksi kas")) return;
     const amount = Number(cashAmount);
 
     if (amount <= 0) {
@@ -1518,6 +1554,7 @@ function App() {
   }
 
   function deleteCashMovement(id) {
+    if (!requireAdmin("menghapus transaksi kas")) return;
     if (!window.confirm("Hapus transaksi kas ini?")) return;
     setCashMovements((prev) => prev.filter((item) => item.id !== id));
   }
@@ -1595,6 +1632,7 @@ function App() {
   }
 
   function printReport() {
+    if (!requireAdmin("mencetak laporan")) return;
     const periodLabel =
       reportStartDate || reportEndDate
         ? `${reportStartDate || "Awal"} s/d ${reportEndDate || "Sekarang"}`
@@ -1843,7 +1881,7 @@ function App() {
           )}
 
           <div style={{marginTop:"14px",fontSize:"12px",opacity:.6,textAlign:"center"}}>
-            PIN Admin awal: 1234 — ubah setelah masuk melalui Master Data.
+            Administrator menggunakan PIN. Karyawan hanya dapat membuka menu Pembelian.
           </div>
         </div>
       </div>
@@ -1891,22 +1929,24 @@ function App() {
           <div style={{fontSize:"12px",marginTop:"8px",opacity:.8}}>
             {currentUserName} — {currentRole === "admin" ? "Administrator" : "Karyawan"}
           </div>
-          <button
-            type="button"
-            onClick={() => loadRemoteSnapshot(true)}
-            style={{
-              marginTop:"10px",
-              width:"100%",
-              padding:"8px 10px",
-              borderRadius:"8px",
-              border:"1px solid rgba(255,255,255,.15)",
-              background:"transparent",
-              color:"#fff",
-              cursor:"pointer",
-            }}
-          >
-            Sinkronkan Sekarang
-          </button>
+          {currentRole === "admin" && (
+            <button
+              type="button"
+              onClick={() => loadRemoteSnapshot(true)}
+              style={{
+                marginTop:"10px",
+                width:"100%",
+                padding:"8px 10px",
+                borderRadius:"8px",
+                border:"1px solid rgba(255,255,255,.15)",
+                background:"transparent",
+                color:"#fff",
+                cursor:"pointer",
+              }}
+            >
+              Sinkronkan Sekarang
+            </button>
+          )}
 
           <button
             type="button"
@@ -1924,7 +1964,7 @@ function App() {
           >
             Keluar / Ganti Pengguna
           </button>
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.0</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.1</div>
         </div>
       </aside>
 
@@ -2021,6 +2061,21 @@ function App() {
                     <p>Catat pembelian material dari supplier.</p>
                   </div>
                 </div>
+
+                {currentRole === "employee" && (
+                  <div
+                    style={{
+                      marginBottom:"16px",
+                      padding:"12px 14px",
+                      borderRadius:"10px",
+                      background:"#eff6ff",
+                      border:"1px solid #bfdbfe",
+                      fontWeight:700,
+                    }}
+                  >
+                    Akses Karyawan: hanya input Pembelian dan cetak nota. Edit/Hapus transaksi serta menu keuangan hanya untuk Administrator.
+                  </div>
+                )}
 
                 <form
                   className="purchase-form"
@@ -2172,9 +2227,14 @@ function App() {
                                 <td>{rupiah(item.price)}</td>
                                 <td>{rupiah(item.total)}</td>
                                 <td>
-                                  <button type="button" onClick={() => printReceipt("purchase", item)}>Cetak</button>{" "}
-                                  <button type="button" onClick={() => editPurchase(item.id)}>Edit</button>{" "}
-                                  <button type="button" className="delete-button" onClick={() => deletePurchase(item.id)}>Hapus</button>
+                                  <button type="button" onClick={() => printReceipt("purchase", item)}>Cetak</button>
+                                  {currentRole === "admin" && (
+                                    <>
+                                      {" "}
+                                      <button type="button" onClick={() => editPurchase(item.id)}>Edit</button>{" "}
+                                      <button type="button" className="delete-button" onClick={() => deletePurchase(item.id)}>Hapus</button>
+                                    </>
+                                  )}
                                 </td>
                               </tr>
                             ))}
