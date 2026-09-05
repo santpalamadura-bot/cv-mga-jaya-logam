@@ -356,6 +356,52 @@ function App() {
   }, [materials, purchases, sales, advances, debts, operations, cashMovements]);
 
   useEffect(() => {
+    // Backup otomatis harian di browser. Maksimal 7 snapshot terakhir.
+    const today = new Date().toISOString().slice(0, 10);
+    const lastDate = localStorage.getItem("wks_last_auto_backup_date");
+
+    if (lastDate === today) return;
+
+    const snapshot = {
+      version: 2,
+      createdAt: new Date().toISOString(),
+      materials,
+      purchases,
+      sales,
+      advances,
+      debts,
+      operations,
+      cashMovements,
+    };
+
+    try {
+      const oldBackups = JSON.parse(
+        localStorage.getItem("wks_auto_backups") || "[]"
+      );
+      const nextBackups = [
+        ...(Array.isArray(oldBackups) ? oldBackups : []),
+        snapshot,
+      ].slice(-7);
+
+      localStorage.setItem(
+        "wks_auto_backups",
+        JSON.stringify(nextBackups)
+      );
+      localStorage.setItem("wks_last_auto_backup_date", today);
+    } catch (error) {
+      console.error("Backup otomatis gagal:", error);
+    }
+  }, [
+    materials,
+    purchases,
+    sales,
+    advances,
+    debts,
+    operations,
+    cashMovements,
+  ]);
+
+  useEffect(() => {
     localStorage.setItem("wks_materials", JSON.stringify(materials));
   }, [materials]);
 
@@ -1198,6 +1244,179 @@ function App() {
           : x
       )
     );
+  }
+
+  function csvCell(value) {
+    const textValue = String(value ?? "").replace(/"/g, '""');
+    return `"${textValue}"`;
+  }
+
+  function exportReportExcel() {
+    const rows = [];
+
+    rows.push([
+      "Jenis",
+      "Tanggal",
+      "Nama",
+      "Petugas",
+      "Material/Keterangan",
+      "Berat KG",
+      "Harga",
+      "Total",
+      "Modal Barang",
+      "Laba",
+    ]);
+
+    reportPurchases.forEach((item) => {
+      rows.push([
+        "Pembelian",
+        item.date || "",
+        item.supplier || "",
+        item.operator || "",
+        item.material || "",
+        Number(item.weight || 0),
+        Number(item.price || 0),
+        Number(item.total || 0),
+        "",
+        "",
+      ]);
+    });
+
+    reportSales.forEach((item) => {
+      const total = Number(item.total || 0);
+      const cost = Number(item.cost || 0);
+      rows.push([
+        "Penjualan",
+        item.date || "",
+        item.buyer || "",
+        item.operator || "",
+        item.material || "",
+        Number(item.weight || 0),
+        Number(item.price || 0),
+        total,
+        cost,
+        total - cost,
+      ]);
+    });
+
+    reportAdvances.forEach((item) => {
+      rows.push([
+        "Panjar",
+        item.date || "",
+        item.name || "",
+        "",
+        item.note || "",
+        "",
+        "",
+        Number(item.amount || 0),
+        "",
+        "",
+      ]);
+    });
+
+    reportDebts.forEach((item) => {
+      rows.push([
+        "Kasbon",
+        item.date || "",
+        item.name || "",
+        "",
+        item.note || "",
+        "",
+        "",
+        Number(item.amount || 0),
+        "",
+        "",
+      ]);
+    });
+
+    reportOperations.forEach((item) => {
+      rows.push([
+        "Operasional",
+        item.date || "",
+        "",
+        "",
+        item.note || item.description || "",
+        "",
+        "",
+        Number(item.amount || 0),
+        "",
+        "",
+      ]);
+    });
+
+    reportCashMovements.forEach((item) => {
+      rows.push([
+        item.type === "masuk" ? "Kas Masuk" : "Kas Keluar",
+        item.date || "",
+        "",
+        "",
+        item.note || "",
+        "",
+        "",
+        Number(item.amount || 0),
+        "",
+        "",
+      ]);
+    });
+
+    rows.push([]);
+    rows.push(["RINGKASAN LAPORAN"]);
+    rows.push(["Penjualan", reportSalesTotal]);
+    rows.push(["Pembelian", reportPurchaseTotal]);
+    rows.push(["Modal Barang Terjual", reportEstimatedCOGS]);
+    rows.push(["Laba Kotor", reportGrossProfit]);
+    rows.push(["Operasional", reportOperationTotal]);
+    rows.push(["Pengeluaran Lain", reportCashOutOther]);
+    rows.push(["Laba Bersih", reportNetProfit]);
+    rows.push(["Saldo Periode", reportBalance]);
+
+    const content = "\uFEFF" + rows
+      .map((row) => row.map(csvCell).join(";"))
+      .join("\r\n");
+
+    const blob = new Blob([content], {
+      type: "text/csv;charset=utf-8;",
+    });
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const start = reportStartDate || "awal";
+    const end = reportEndDate || "akhir";
+    a.href = url;
+    a.download = `LAPORAN_WKS_${start}_${end}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function downloadLatestAutoBackup() {
+    try {
+      const backups = JSON.parse(
+        localStorage.getItem("wks_auto_backups") || "[]"
+      );
+
+      if (!Array.isArray(backups) || backups.length === 0) {
+        alert("Belum ada backup otomatis.");
+        return;
+      }
+
+      const latest = backups[backups.length - 1];
+      const blob = new Blob([JSON.stringify(latest, null, 2)], {
+        type: "application/json",
+      });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const date = String(latest.createdAt || new Date().toISOString())
+        .slice(0, 10);
+      a.href = url;
+      a.download = `WKS_AUTO_BACKUP_${date}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      setBackupNotice("Backup otomatis terbaru berhasil di-download.");
+      setTimeout(() => setBackupNotice(""), 2500);
+    } catch {
+      alert("Backup otomatis tidak dapat dibaca.");
+    }
   }
 
   function backupData() {
@@ -2419,7 +2638,7 @@ function App() {
                   <div>
                     <div className="breadcrumb">Beranda / Laporan</div>
                     <h2>Laporan</h2>
-                    <p>Filter laporan berdasarkan tanggal, lihat laba, dan cetak laporan.</p>
+                    <p>Filter laporan berdasarkan tanggal, lihat laba, export Excel, dan simpan PDF.</p>
                   </div>
                 </div>
 
@@ -2431,7 +2650,7 @@ function App() {
 
                   <div style={{
                     display:"grid",
-                    gridTemplateColumns:"1fr 1fr auto auto",
+                    gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))",
                     gap:"12px",
                     alignItems:"end",
                     marginBottom:"18px"
@@ -2468,9 +2687,17 @@ function App() {
                     <button
                       type="button"
                       className="primary-button"
+                      onClick={exportReportExcel}
+                    >
+                      Export Excel
+                    </button>
+
+                    <button
+                      type="button"
+                      className="primary-button"
                       onClick={printReport}
                     >
-                      Cetak Laporan
+                      Cetak / Simpan PDF
                     </button>
                   </div>
 
@@ -2635,6 +2862,10 @@ function App() {
                       Download Backup
                     </button>
 
+                    <button type="button" className="primary-button" onClick={downloadLatestAutoBackup}>
+                      Download Backup Otomatis
+                    </button>
+
                     <label className="primary-button" style={{cursor:"pointer",display:"inline-flex",alignItems:"center"}}>
                       Restore Backup
                       <input
@@ -2653,7 +2884,7 @@ function App() {
                   )}
 
                   <div style={{fontSize:"13px",opacity:.7}}>
-                    Backup menyimpan Master Data, Pembelian, Penjualan, Panjar, Kasbon, dan Operasional.
+                    Backup menyimpan seluruh data usaha. Sistem juga membuat backup otomatis harian di browser dan menyimpan maksimal 7 backup terakhir. Data utama tetap tersinkron ke Supabase.
                   </div>
                 </div>
               </>
