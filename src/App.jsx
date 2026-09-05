@@ -1962,9 +1962,319 @@ function App() {
       ? menu.filter((item) => item.id === "pembelian")
       : menu;
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    let viewport = document.querySelector('meta[name="viewport"]');
+    if (!viewport) {
+      viewport = document.createElement("meta");
+      viewport.setAttribute("name", "viewport");
+      document.head.appendChild(viewport);
+    }
+    viewport.setAttribute(
+      "content",
+      "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
+    );
+  }, []);
+
   return (
     <div className="app">
-      <aside className="sidebar">
+      <style>{`
+        .mobile-menu-button,
+        .mobile-menu-overlay {
+          display: none;
+        }
+
+        @media (max-width: 768px) {
+          html, body, #root {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            overflow-x: hidden !important;
+          }
+
+          body {
+            margin: 0 !important;
+          }
+
+          .app {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            overflow-x: hidden !important;
+          }
+
+          .sidebar {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            bottom: 0 !important;
+            width: 260px !important;
+            max-width: 84vw !important;
+            height: 100dvh !important;
+            z-index: 1200 !important;
+            transform: translateX(-105%);
+            transition: transform .22s ease;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+          }
+
+          .sidebar.mobile-open {
+            transform: translateX(0);
+          }
+
+          .sidebar nav {
+            overflow: visible !important;
+          }
+
+          .sidebar-bottom {
+            margin-top: 18px !important;
+            padding-bottom: 24px !important;
+          }
+
+          .mobile-menu-button {
+            display: flex !important;
+            position: fixed !important;
+            top: calc(12px + env(safe-area-inset-top)) !important;
+            left: 12px !important;
+            z-index: 1300 !important;
+            width: 42px !important;
+            height: 42px !important;
+            border: 0 !important;
+            border-radius: 10px !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #111827 !important;
+            color: #fff !important;
+            font-size: 24px !important;
+            line-height: 1 !important;
+            box-shadow: 0 4px 14px rgba(0,0,0,.18) !important;
+          }
+
+          .mobile-menu-overlay {
+            display: block !important;
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 1100 !important;
+            background: rgba(15, 23, 42, .42) !important;
+          }
+
+          .main {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            margin-left: 0 !important;
+            overflow-x: hidden !important;
+          }
+
+          .topbar {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            padding: calc(12px + env(safe-area-inset-top)) 14px 12px 64px !important;
+            min-height: 68px !important;
+            gap: 8px !important;
+            align-items: center !important;
+          }
+
+          .topbar > div:first-child .breadcrumb {
+            display: none !important;
+          }
+
+          .topbar h1 {
+            margin: 0 !important;
+            font-size: 18px !important;
+            line-height: 1.2 !important;
+          }
+
+          .topbar-right {
+            gap: 6px !important;
+            margin-left: auto !important;
+            min-width: 0 !important;
+          }
+
+          .date-box {
+            display: none !important;
+          }
+
+          .user-box {
+            min-width: 0 !important;
+            gap: 5px !important;
+          }
+
+          .user-box .avatar {
+            display: none !important;
+          }
+
+          .user-box strong {
+            font-size: 11px !important;
+            max-width: 105px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+          }
+
+          .user-box small {
+            font-size: 9px !important;
+          }
+
+          .content,
+          .menu-page {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            padding: 16px !important;
+          }
+
+          .page-header {
+            margin-bottom: 14px !important;
+          }
+
+          .page-header .breadcrumb {
+            font-size: 11px !important;
+          }
+
+          .page-header h2 {
+            font-size: 22px !important;
+            line-height: 1.2 !important;
+          }
+
+          .page-header p {
+            font-size: 13px !important;
+          }
+
+          .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+            width: 100% !important;
+          }
+
+          .card {
+            min-width: 0 !important;
+            width: auto !important;
+            box-sizing: border-box !important;
+            padding: 14px !important;
+            border-radius: 14px !important;
+          }
+
+          .card-top {
+            gap: 6px !important;
+            align-items: flex-start !important;
+          }
+
+          .card-top > span:first-child {
+            min-width: 0 !important;
+            font-size: 11px !important;
+            line-height: 1.25 !important;
+          }
+
+          .card-icon {
+            flex: 0 0 auto !important;
+            width: 34px !important;
+            height: 34px !important;
+            font-size: 11px !important;
+          }
+
+          .card h3 {
+            margin-top: 12px !important;
+            font-size: 17px !important;
+            line-height: 1.25 !important;
+            overflow-wrap: anywhere !important;
+            word-break: break-word !important;
+          }
+
+          .card p {
+            font-size: 10px !important;
+            line-height: 1.35 !important;
+          }
+
+          .page-card,
+          .purchase-form,
+          .purchase-history {
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+          }
+
+          .menu-page [style*="grid-template-columns"] {
+            grid-template-columns: 1fr !important;
+          }
+
+          .menu-page .cards {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+          }
+
+          .purchase-form input,
+          .purchase-form select,
+          .purchase-form textarea,
+          .form-group input,
+          .form-group select,
+          .form-group textarea {
+            width: 100% !important;
+            min-width: 0 !important;
+            box-sizing: border-box !important;
+            font-size: 16px !important;
+          }
+
+          .purchase-total {
+            gap: 8px !important;
+            flex-wrap: wrap !important;
+          }
+
+          .primary-button,
+          .secondary-button,
+          .delete-button {
+            max-width: 100% !important;
+          }
+
+          .table-wrapper {
+            width: 100% !important;
+            max-width: 100% !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch !important;
+          }
+
+          .table-wrapper table {
+            min-width: 700px !important;
+          }
+
+          .section-title {
+            gap: 8px !important;
+            align-items: flex-start !important;
+          }
+
+          .material-item {
+            gap: 10px !important;
+          }
+        }
+
+        @media (max-width: 360px) {
+          .cards,
+          .menu-page .cards {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
+
+      <button
+        type="button"
+        className="mobile-menu-button"
+        onClick={() => setMobileMenuOpen((open) => !open)}
+        aria-label="Buka menu"
+      >
+        {mobileMenuOpen ? "×" : "☰"}
+      </button>
+
+      {mobileMenuOpen && (
+        <div
+          className="mobile-menu-overlay"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      <aside className={`sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="brand">
           <div className="brand-logo">W</div>
           <div>
@@ -1982,7 +2292,10 @@ function App() {
               className={`menu-item ${
                 activeMenu === item.id ? "active" : ""
               }`}
-              onClick={() => setActiveMenu(item.id)}
+              onClick={() => {
+                setActiveMenu(item.id);
+                setMobileMenuOpen(false);
+              }}
             >
               <span className="menu-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -2034,7 +2347,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.5</div>
+          <div className="version" style={{marginTop:"8px"}}>WKS Management System v2.6</div>
         </div>
       </aside>
 
