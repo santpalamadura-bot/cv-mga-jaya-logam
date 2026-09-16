@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import "./App.css";
 
-const SUPABASE_URL = "https://gznxhxaznykfbkrfdova.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_J4XysmLrS8VCNK9Zr9Ilpw_fzZpxErN";
-const SUPABASE_STATE_URL = `${SUPABASE_URL}/rest/v1/wks_app_state`;
+const SUPABASE_URL = "https://quqzeowhxqizzgtupwsn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_tAQH6PudBo7gsxJhz5EBwg_Dr978_Mk";
+const SUPABASE_STATE_URL = `${SUPABASE_URL}/rest/v1/mga_app_state`;
 
 async function supabaseRequest(path = "", options = {}) {
   const response = await fetch(`${SUPABASE_STATE_URL}${path}`, {
@@ -36,6 +36,7 @@ const menu = [
   { id: "panjar", icon: "Rp", label: "Panjar" },
   { id: "kasbon", icon: "K", label: "Kasbon" },
   { id: "operasional", icon: "O", label: "Operasional" },
+  { id: "tabungan", icon: "T", label: "Tabungan Anggota" },
   { id: "keuangan", icon: "Rp", label: "Keuangan" },
   { id: "laporan", icon: "▥", label: "Laporan" },
   { id: "master", icon: "⚙", label: "Master Data" },
@@ -177,7 +178,7 @@ function App() {
   const [activeMenu, setActiveMenu] = useState("dashboard");
 
   const [currentRole, setCurrentRole] = useState(() =>
-    loadLocal("wks_role_session", "")
+    loadLocal("mga_role_session", "")
   );
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -193,43 +194,51 @@ function App() {
       "content",
       "width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover"
     );
-    document.title = "WKS Management System";
+    document.title = "MGA Management System";
   }, []);
   const [currentUserName, setCurrentUserName] = useState(() =>
-    loadLocal("wks_user_name_session", "")
+    loadLocal("mga_user_name_session", "")
   );
   const [selectedLoginName, setSelectedLoginName] = useState("");
   const [adminPin, setAdminPin] = useState(() =>
-    loadLocal("wks_admin_pin", "1234")
+    loadLocal("mga_admin_pin", "1234")
   );
   const [pinInput, setPinInput] = useState("");
   const [newAdminPin, setNewAdminPin] = useState("");
 
   const [purchases, setPurchases] = useState(() =>
-    loadLocal("wks_purchases", [])
+    loadLocal("mga_purchases", [])
   );
 
   const [materials, setMaterials] = useState(() =>
-    loadLocal("wks_materials", stock)
+    loadLocal("mga_materials", stock)
   );
 
   const [sales, setSales] = useState(() =>
-    loadLocal("wks_sales", [])
+    loadLocal("mga_sales", [])
   );
 
   const [advances, setAdvances] = useState(() =>
-    loadLocal("wks_advances", [])
+    loadLocal("mga_advances", [])
   );
   const [debts, setDebts] = useState(() =>
-    loadLocal("wks_debts", [])
+    loadLocal("mga_debts", [])
   );
   const [operations, setOperations] = useState(() =>
-    loadLocal("wks_operations", [])
+    loadLocal("mga_operations", [])
   );
 
   const [cashMovements, setCashMovements] = useState(() =>
-    loadLocal("wks_cash_movements", [])
+    loadLocal("mga_cash_movements", [])
   );
+
+  const [savings, setSavings] = useState(() =>
+    loadLocal("mga_savings", [])
+  );
+  const [savingMember, setSavingMember] = useState("");
+  const [savingType, setSavingType] = useState("setoran");
+  const [savingAmount, setSavingAmount] = useState("");
+  const [savingNote, setSavingNote] = useState("");
 
   const [cashType, setCashType] = useState("masuk");
   const [cashAmount, setCashAmount] = useState("");
@@ -297,7 +306,8 @@ function App() {
       debts,
       operations,
       cashMovements,
-      version: 1,
+      savings,
+      version: 2,
     };
   }
 
@@ -313,6 +323,7 @@ function App() {
     if (Array.isArray(data.debts)) setDebts(data.debts);
     if (Array.isArray(data.operations)) setOperations(data.operations);
     if (Array.isArray(data.cashMovements)) setCashMovements(data.cashMovements);
+    if (Array.isArray(data.savings)) setSavings(data.savings);
 
     window.setTimeout(() => {
       applyingRemoteRef.current = false;
@@ -438,12 +449,12 @@ function App() {
     };
     // All business data that must sync between devices.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [materials, purchases, sales, advances, debts, operations, cashMovements]);
+  }, [materials, purchases, sales, advances, debts, operations, cashMovements, savings]);
 
   useEffect(() => {
     // Backup otomatis harian di browser. Maksimal 7 snapshot terakhir.
     const today = new Date().toISOString().slice(0, 10);
-    const lastDate = localStorage.getItem("wks_last_auto_backup_date");
+    const lastDate = localStorage.getItem("mga_last_auto_backup_date");
 
     if (lastDate === today) return;
 
@@ -457,11 +468,12 @@ function App() {
       debts,
       operations,
       cashMovements,
+      savings,
     };
 
     try {
       const oldBackups = JSON.parse(
-        localStorage.getItem("wks_auto_backups") || "[]"
+        localStorage.getItem("mga_auto_backups") || "[]"
       );
       const nextBackups = [
         ...(Array.isArray(oldBackups) ? oldBackups : []),
@@ -469,10 +481,10 @@ function App() {
       ].slice(-7);
 
       localStorage.setItem(
-        "wks_auto_backups",
+        "mga_auto_backups",
         JSON.stringify(nextBackups)
       );
-      localStorage.setItem("wks_last_auto_backup_date", today);
+      localStorage.setItem("mga_last_auto_backup_date", today);
     } catch (error) {
       console.error("Backup otomatis gagal:", error);
     }
@@ -484,22 +496,23 @@ function App() {
     debts,
     operations,
     cashMovements,
+    savings,
   ]);
 
   useEffect(() => {
-    localStorage.setItem("wks_materials", JSON.stringify(materials));
+    localStorage.setItem("mga_materials", JSON.stringify(materials));
   }, [materials]);
 
   useEffect(() => {
-    localStorage.setItem("wks_role_session", JSON.stringify(currentRole));
+    localStorage.setItem("mga_role_session", JSON.stringify(currentRole));
   }, [currentRole]);
 
   useEffect(() => {
-    localStorage.setItem("wks_user_name_session", JSON.stringify(currentUserName));
+    localStorage.setItem("mga_user_name_session", JSON.stringify(currentUserName));
   }, [currentUserName]);
 
   useEffect(() => {
-    localStorage.setItem("wks_admin_pin", JSON.stringify(adminPin));
+    localStorage.setItem("mga_admin_pin", JSON.stringify(adminPin));
   }, [adminPin]);
 
   useEffect(() => {
@@ -509,28 +522,32 @@ function App() {
   }, [currentRole, activeMenu]);
 
   useEffect(() => {
-    localStorage.setItem("wks_purchases", JSON.stringify(purchases));
+    localStorage.setItem("mga_purchases", JSON.stringify(purchases));
   }, [purchases]);
 
   useEffect(() => {
-    localStorage.setItem("wks_sales", JSON.stringify(sales));
+    localStorage.setItem("mga_sales", JSON.stringify(sales));
   }, [sales]);
 
   useEffect(() => {
-    localStorage.setItem("wks_advances", JSON.stringify(advances));
+    localStorage.setItem("mga_advances", JSON.stringify(advances));
   }, [advances]);
 
   useEffect(() => {
-    localStorage.setItem("wks_debts", JSON.stringify(debts));
+    localStorage.setItem("mga_debts", JSON.stringify(debts));
   }, [debts]);
 
   useEffect(() => {
-    localStorage.setItem("wks_operations", JSON.stringify(operations));
+    localStorage.setItem("mga_operations", JSON.stringify(operations));
   }, [operations]);
 
   useEffect(() => {
-    localStorage.setItem("wks_cash_movements", JSON.stringify(cashMovements));
+    localStorage.setItem("mga_cash_movements", JSON.stringify(cashMovements));
   }, [cashMovements]);
+
+  useEffect(() => {
+    localStorage.setItem("mga_savings", JSON.stringify(savings));
+  }, [savings]);
 
   const totalStock = useMemo(
     () =>
@@ -613,6 +630,63 @@ function App() {
 
   const grossProfit = totalSales - costOfGoodsSold;
   const netProfit = grossProfit - totalOperations - totalCashOutOther;
+
+  const totalSavingsDeposits = savings
+    .filter((item) => item.type === "setoran")
+    .reduce((total, item) => total + Number(item.amount || 0), 0);
+  const totalSavingsWithdrawals = savings
+    .filter((item) => item.type === "penarikan")
+    .reduce((total, item) => total + Number(item.amount || 0), 0);
+  const totalSavingsBalance = totalSavingsDeposits - totalSavingsWithdrawals;
+
+  const savingMembers = useMemo(() => {
+    const map = new Map();
+    savings.forEach((item) => {
+      const name = String(item.member || "").trim();
+      if (!name) return;
+      const old = map.get(name) || { member: name, deposits: 0, withdrawals: 0, balance: 0 };
+      const amount = Number(item.amount || 0);
+      if (item.type === "penarikan") old.withdrawals += amount;
+      else old.deposits += amount;
+      old.balance = old.deposits - old.withdrawals;
+      map.set(name, old);
+    });
+    return Array.from(map.values()).sort((a, b) => a.member.localeCompare(b.member, "id"));
+  }, [savings]);
+
+  function saveSaving() {
+    if (!requireAdmin("mencatat tabungan anggota")) return;
+    const member = savingMember.trim();
+    const amount = Number(savingAmount);
+    if (!member || amount <= 0) {
+      alert("Isi nama anggota dan nominal dengan benar.");
+      return;
+    }
+    const memberBalance = savings
+      .filter((item) => String(item.member || "").toLowerCase() === member.toLowerCase())
+      .reduce((total, item) => total + (item.type === "penarikan" ? -Number(item.amount || 0) : Number(item.amount || 0)), 0);
+    if (savingType === "penarikan" && amount > memberBalance) {
+      alert(`Saldo tabungan ${member} tidak cukup. Saldo tersedia ${rupiah(memberBalance)}.`);
+      return;
+    }
+    setSavings((prev) => [...prev, {
+      id: Date.now(),
+      date: new Date().toLocaleDateString("id-ID"),
+      member,
+      type: savingType,
+      amount,
+      note: savingNote.trim(),
+      operator: currentUserName || "Admin",
+    }]);
+    setSavingAmount("");
+    setSavingNote("");
+  }
+
+  function deleteSaving(id) {
+    if (!requireAdmin("menghapus transaksi tabungan")) return;
+    if (!window.confirm("Hapus transaksi tabungan ini?")) return;
+    setSavings((prev) => prev.filter((item) => item.id !== id));
+  }
 
   function parseIdDate(value) {
     if (!value) return null;
@@ -1498,7 +1572,7 @@ function App() {
     const start = reportStartDate || "awal";
     const end = reportEndDate || "akhir";
     a.href = url;
-    a.download = `LAPORAN_WKS_${start}_${end}.csv`;
+    a.download = `LAPORAN_MGA_${start}_${end}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -1507,7 +1581,7 @@ function App() {
     if (!requireAdmin("mengunduh backup otomatis")) return;
     try {
       const backups = JSON.parse(
-        localStorage.getItem("wks_auto_backups") || "[]"
+        localStorage.getItem("mga_auto_backups") || "[]"
       );
 
       if (!Array.isArray(backups) || backups.length === 0) {
@@ -1524,7 +1598,7 @@ function App() {
       const date = String(latest.createdAt || new Date().toISOString())
         .slice(0, 10);
       a.href = url;
-      a.download = `WKS_AUTO_BACKUP_${date}.json`;
+      a.download = `MGA_AUTO_BACKUP_${date}.json`;
       a.click();
       URL.revokeObjectURL(url);
 
@@ -1547,6 +1621,7 @@ function App() {
       debts,
       operations,
       cashMovements,
+      savings,
     };
 
     const blob = new Blob([JSON.stringify(data, null, 2)], {
@@ -1557,7 +1632,7 @@ function App() {
     const a = document.createElement("a");
     const date = new Date().toISOString().slice(0, 10);
     a.href = url;
-    a.download = `WKS_BACKUP_${date}.json`;
+    a.download = `MGA_BACKUP_${date}.json`;
     a.click();
     URL.revokeObjectURL(url);
 
@@ -1602,6 +1677,7 @@ function App() {
         setDebts(data.debts || []);
         setOperations(data.operations || []);
         setCashMovements(data.cashMovements || []);
+        setSavings(data.savings || []);
 
         setBackupNotice("Restore berhasil. Data sudah dimuat.");
         setTimeout(() => setBackupNotice(""), 3000);
@@ -1683,7 +1759,7 @@ function App() {
         </head>
         <body>
           <div class="center">
-            <div class="company">PT WIDI KURNIA SEJAHTERA</div>
+            <div class="company">CV. MGA JAYA LOGAM</div>
             <div class="title">${title}</div>
           </div>
           <div class="line"></div>
@@ -1699,7 +1775,7 @@ function App() {
           <div class="line"></div>
           <div class="footer">
             Terima kasih.<br/>
-            PT Widi Kurnia Sejahtera
+            CV. MGA JAYA LOGAM
           </div>
           <script>window.onload=()=>window.print();<\/script>
         </body>
@@ -1796,7 +1872,7 @@ function App() {
       <html>
         <head>
           <meta charset="utf-8" />
-          <title>Laporan WKS</title>
+          <title>Laporan MGA</title>
           <style>
             body{font-family:Arial,sans-serif;padding:28px;color:#111}
             h1{margin:0 0 4px;font-size:24px}
@@ -1811,7 +1887,7 @@ function App() {
           </style>
         </head>
         <body>
-          <h1>PT WIDI KURNIA SEJAHTERA</h1>
+          <h1>CV. MGA JAYA LOGAM</h1>
           <div class="sub">Laporan Keuangan & Transaksi — ${periodLabel}</div>
 
           <h2>Ringkasan</h2>
@@ -1883,23 +1959,19 @@ function App() {
           }}
         >
           <div style={{textAlign:"center",marginBottom:"24px"}}>
-            <div
-              style={{
-                width:"58px",
-                height:"58px",
-                borderRadius:"14px",
-                background:"#2563eb",
-                color:"#fff",
-                display:"grid",
-                placeItems:"center",
-                fontSize:"28px",
-                fontWeight:800,
-                margin:"0 auto 12px",
-              }}
-            >
-              W
-            </div>
-            <h2 style={{margin:"0 0 5px"}}>WIDI KURNIA SEJAHTERA</h2>
+            <img
+  src="/LOGO MGA.jpg"
+  alt="CV. MGA JAYA LOGAM"
+  style={{
+    width:"220px",
+    maxWidth:"80%",
+    height:"auto",
+    display:"block",
+    margin:"0 auto 12px",
+    objectFit:"contain",
+  }}
+/>
+           
             <p style={{margin:0,opacity:.65}}>Pilih akses aplikasi</p>
           </div>
 
@@ -2315,10 +2387,10 @@ function App() {
 
       <aside className={`sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="brand">
-          <div className="brand-logo">W</div>
+          <div className="brand-logo">M</div>
           <div>
-            <div className="brand-title">WIDI KURNIA</div>
-            <div className="brand-subtitle">SEJAHTERA</div>
+            <div className="brand-title">MGA JAYA</div>
+            <div className="brand-subtitle">LOGAM</div>
           </div>
         </div>
 
@@ -2394,7 +2466,7 @@ function App() {
               Sinkronkan Sekarang
             </button>
           )}
-          <div className="version" style={{marginTop:"8px"}}>WKS Management System v3.0 FINAL</div>
+          <div className="version" style={{marginTop:"8px"}}>MGA Management System v1.0 FINAL</div>
         </div>
       </aside>
 
@@ -2445,7 +2517,7 @@ function App() {
               <div>
                 <div className="breadcrumb">Beranda / Dashboard</div>
                 <h2>Dashboard</h2>
-                <p>Ringkasan utama PT Widi Kurnia Sejahtera.</p>
+                <p>Ringkasan utama CV. MGA JAYA LOGAM.</p>
               </div>
             </div>
 
@@ -2960,6 +3032,32 @@ function App() {
                     <button type="button" onClick={()=>editOperation(item.id)}>Edit</button>{" "}
                     <button type="button" className="delete-button" onClick={()=>deleteOperation(item.id)}>Hapus</button>
                   </td></tr>)}</tbody></table></div>}
+                </div>
+              </>
+            ) : activeMenu === "tabungan" ? (
+              <>
+                <div className="page-header"><div><div className="breadcrumb">Beranda / Tabungan Anggota</div><h2>Tabungan Anggota</h2><p>Catat setoran, penarikan, saldo tiap anggota, dan riwayat transaksi.</p></div></div>
+                <div className="cards" style={{display:"grid",gridTemplateColumns:"repeat(3, minmax(0, 1fr))",gap:"18px",marginBottom:"20px"}}>
+                  <div className="card green"><div className="card-top"><span>Total Setoran</span><span className="card-icon">+</span></div><h3>{rupiah(totalSavingsDeposits)}</h3><p>Seluruh setoran anggota</p></div>
+                  <div className="card orange"><div className="card-top"><span>Total Penarikan</span><span className="card-icon">-</span></div><h3>{rupiah(totalSavingsWithdrawals)}</h3><p>Seluruh penarikan anggota</p></div>
+                  <div className="card blue"><div className="card-top"><span>Saldo Tabungan</span><span className="card-icon">Rp</span></div><h3>{rupiah(totalSavingsBalance)}</h3><p>Saldo seluruh anggota</p></div>
+                </div>
+                <form className="purchase-form" onSubmit={(e)=>{e.preventDefault();saveSaving();}}>
+                  <div style={{display:"grid",gridTemplateColumns:"1.2fr .8fr 1fr 1.5fr",gap:"14px",alignItems:"end"}}>
+                    <div className="form-group"><label>Nama Anggota</label><input value={savingMember} onChange={(e)=>setSavingMember(e.target.value)} placeholder="Nama anggota" /></div>
+                    <div className="form-group"><label>Jenis</label><select value={savingType} onChange={(e)=>setSavingType(e.target.value)}><option value="setoran">Setoran</option><option value="penarikan">Penarikan</option></select></div>
+                    <div className="form-group"><label>Nominal</label><input type="number" value={savingAmount} onChange={(e)=>setSavingAmount(e.target.value)} placeholder="0" /></div>
+                    <div className="form-group"><label>Keterangan</label><input value={savingNote} onChange={(e)=>setSavingNote(e.target.value)} placeholder="Opsional" /></div>
+                  </div>
+                  <button className="primary-button" type="submit">Simpan Tabungan — Enter</button>
+                </form>
+                <div className="page-card" style={{marginTop:"20px"}}>
+                  <div className="section-title"><h3>Saldo per Anggota</h3><span>{savingMembers.length} anggota</span></div>
+                  {savingMembers.length === 0 ? <div className="empty-history">Belum ada tabungan anggota.</div> : <div className="table-wrapper"><table><thead><tr><th>Nama Anggota</th><th>Setoran</th><th>Penarikan</th><th>Saldo</th></tr></thead><tbody>{savingMembers.map((item)=><tr key={item.member}><td><strong>{item.member}</strong></td><td>{rupiah(item.deposits)}</td><td>{rupiah(item.withdrawals)}</td><td><strong>{rupiah(item.balance)}</strong></td></tr>)}</tbody></table></div>}
+                </div>
+                <div className="purchase-history">
+                  <div className="section-title"><h3>Riwayat Tabungan</h3><span>{savings.length} transaksi</span></div>
+                  {savings.length === 0 ? <div className="empty-history">Belum ada transaksi tabungan.</div> : <div className="table-wrapper"><table><thead><tr><th>Tanggal</th><th>Anggota</th><th>Jenis</th><th>Nominal</th><th>Keterangan</th><th>Petugas</th><th>Aksi</th></tr></thead><tbody>{savings.slice().reverse().map((item)=><tr key={item.id}><td>{item.date}</td><td>{item.member}</td><td>{item.type === "setoran" ? "Setoran" : "Penarikan"}</td><td>{rupiah(item.amount)}</td><td>{item.note || "-"}</td><td>{item.operator || "-"}</td><td><button type="button" className="delete-button" onClick={()=>deleteSaving(item.id)}>Hapus</button></td></tr>)}</tbody></table></div>}
                 </div>
               </>
             ) : activeMenu === "keuangan" ? (
