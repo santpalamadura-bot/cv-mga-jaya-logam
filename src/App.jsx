@@ -1941,7 +1941,7 @@ function App() {
       <div
         style={{
           minHeight: "100vh",
-          background: "#f4f7fb",
+          background: "linear-gradient(135deg, #eef7f4 0%, #f7fafc 48%, #e8f1f5 100%)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -1955,7 +1955,8 @@ function App() {
             background: "#fff",
             borderRadius: "18px",
             padding: "30px",
-            boxShadow: "0 12px 35px rgba(15,23,42,.12)",
+            boxShadow: "0 18px 50px rgba(11,31,51,.14)",
+            border: "1px solid rgba(18,128,112,.14)",
           }}
         >
           <div style={{textAlign:"center",marginBottom:"24px"}}>
@@ -2054,6 +2055,180 @@ function App() {
   return (
     <div className="app">
       <style>{`
+        /* ===== MGA FINAL VISUAL THEME =====
+           Visual only: business logic, calculations and Supabase sync are untouched.
+        */
+        :root {
+          --mga-navy: #0b1f33;
+          --mga-navy-2: #102c46;
+          --mga-teal: #128070;
+          --mga-green: #2f9b74;
+          --mga-mint: #eaf6f2;
+          --mga-bg: #f3f8f7;
+          --mga-line: #dce9e6;
+          --mga-text: #102235;
+          --mga-muted: #64748b;
+        }
+
+        body {
+          background: var(--mga-bg) !important;
+          color: var(--mga-text) !important;
+        }
+
+        .app {
+          background: var(--mga-bg) !important;
+        }
+
+        .sidebar {
+          background: linear-gradient(180deg, var(--mga-navy) 0%, #0d293c 58%, #103b43 100%) !important;
+          border-right: 1px solid rgba(255,255,255,.07) !important;
+          box-shadow: 8px 0 28px rgba(11,31,51,.08) !important;
+        }
+
+        .brand {
+          padding-top: 18px !important;
+          padding-bottom: 18px !important;
+          align-items: center !important;
+          gap: 12px !important;
+        }
+
+        .brand-logo {
+          width: 58px !important;
+          height: 58px !important;
+          min-width: 58px !important;
+          border-radius: 14px !important;
+          background: #fff !important;
+          background-image: url("/LOGO MGA.jpg") !important;
+          background-size: contain !important;
+          background-position: center !important;
+          background-repeat: no-repeat !important;
+          color: transparent !important;
+          font-size: 0 !important;
+          overflow: hidden !important;
+          box-shadow: 0 6px 18px rgba(0,0,0,.18) !important;
+          border: 1px solid rgba(255,255,255,.45) !important;
+        }
+
+        .brand-title {
+          color: #fff !important;
+          font-weight: 800 !important;
+          letter-spacing: .3px !important;
+        }
+
+        .brand-subtitle,
+        .menu-title,
+        .version {
+          color: rgba(255,255,255,.68) !important;
+        }
+
+        .menu-item {
+          color: rgba(255,255,255,.86) !important;
+          border-radius: 10px !important;
+          transition: background .18s ease, transform .18s ease !important;
+        }
+
+        .menu-item:hover {
+          background: rgba(255,255,255,.08) !important;
+        }
+
+        .menu-item.active {
+          background: linear-gradient(90deg, rgba(18,128,112,.95), rgba(47,155,116,.86)) !important;
+          color: #fff !important;
+          box-shadow: 0 5px 16px rgba(18,128,112,.20) !important;
+        }
+
+        .menu-item.active .menu-icon {
+          color: #fff !important;
+        }
+
+        .company-status .status-dot {
+          background: #45d69a !important;
+          box-shadow: 0 0 0 4px rgba(69,214,154,.12) !important;
+        }
+
+        .main {
+          background: var(--mga-bg) !important;
+        }
+
+        .topbar {
+          background: rgba(255,255,255,.96) !important;
+          border-bottom: 1px solid var(--mga-line) !important;
+          box-shadow: 0 3px 14px rgba(11,31,51,.035) !important;
+        }
+
+        .breadcrumb {
+          color: var(--mga-teal) !important;
+        }
+
+        .avatar {
+          background: linear-gradient(135deg, var(--mga-navy-2), var(--mga-teal)) !important;
+          color: #fff !important;
+        }
+
+        .content,
+        .menu-page {
+          background: var(--mga-bg) !important;
+        }
+
+        .page-card,
+        .purchase-form,
+        .purchase-history,
+        .card {
+          border-color: var(--mga-line) !important;
+          box-shadow: 0 8px 24px rgba(11,31,51,.045) !important;
+        }
+
+        .card {
+          border-top: 3px solid var(--mga-teal) !important;
+          background: #fff !important;
+        }
+
+        .card.blue,
+        .card.green,
+        .card.orange,
+        .card.purple {
+          border-top-color: var(--mga-teal) !important;
+        }
+
+        .card-icon {
+          background: var(--mga-mint) !important;
+          color: var(--mga-teal) !important;
+        }
+
+        .card h3,
+        .page-header h2,
+        .section-title h3 {
+          color: var(--mga-navy) !important;
+        }
+
+        .primary-button {
+          background: linear-gradient(135deg, var(--mga-teal), var(--mga-green)) !important;
+          border-color: var(--mga-teal) !important;
+          color: #fff !important;
+          box-shadow: 0 5px 14px rgba(18,128,112,.16) !important;
+        }
+
+        .secondary-button {
+          border-color: var(--mga-teal) !important;
+          color: var(--mga-teal) !important;
+        }
+
+        input:focus,
+        select:focus,
+        textarea:focus {
+          border-color: var(--mga-teal) !important;
+          box-shadow: 0 0 0 3px rgba(18,128,112,.10) !important;
+          outline: none !important;
+        }
+
+        .material-item {
+          border-color: var(--mga-line) !important;
+        }
+
+        .mobile-menu-button {
+          background: linear-gradient(135deg, var(--mga-navy), var(--mga-teal)) !important;
+        }
+
         .mobile-menu-button,
         .mobile-menu-overlay,
         .mobile-logout-button {
@@ -2387,7 +2562,7 @@ function App() {
 
       <aside className={`sidebar ${mobileMenuOpen ? "mobile-open" : ""}`}>
         <div className="brand">
-          <div className="brand-logo">M</div>
+          <div className="brand-logo" aria-label="Logo CV. MGA JAYA LOGAM"></div>
           <div>
             <div className="brand-title">MGA JAYA</div>
             <div className="brand-subtitle">LOGAM</div>
